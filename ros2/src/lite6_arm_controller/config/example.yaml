@@ -1,0 +1,12 @@
+# Configuration for Lite6 arm controller with GELLO teleoperation.
+# Adjust robot_ip to your Lite6's IP address.
+
+robot_ip: "192.168.1.111"
+speed: 50.0          # degrees/s (used in non-servo mode)
+servo_mode: true     # true = real-time servo mode (recommended for teleop)
+
+# Gripper (OpenParallelGripper via Modbus)
+gripper_enabled: true
+modbus_baudrate: 115200
+gripper_open: 0
+gripper_close: 250

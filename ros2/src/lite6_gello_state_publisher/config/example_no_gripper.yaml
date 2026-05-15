@@ -1,0 +1,11 @@
+# Example config for a 6-DoF GELLO arm (Zhonglin servos) without a gripper.
+
+LITE6_NO_GRIPPER:
+  namespace: ""
+  com_port: "/dev/ttyUSB0"
+  baudrate: 115200
+  num_arm_joints: 6
+  joint_signs: [1, 1, 1, 1, 1, 1]
+  gripper: false
+  assembly_offsets: [0.000, 0.000, 0.000, 0.000, 0.000, 0.000]
+  gripper_range_rad: [0.0, 0.0]

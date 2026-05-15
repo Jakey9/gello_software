@@ -1,0 +1,13 @@
+# Example config for a 6-DoF GELLO arm (Zhonglin servos) teleoperating a UFFactory Lite6.
+# Adjust com_port, assembly_offsets, joint_signs, and gripper_range_rad after calibration.
+# Run the calibration script: python3 scripts/get_offsets.py --port /dev/ttyUSB0
+
+LITE6_SINGLE:
+  namespace: ""
+  com_port: "/dev/ttyUSB0"  # or use by-id path: "usb-1a86_USB_Serial-if00-port0"
+  baudrate: 115200
+  num_arm_joints: 6
+  joint_signs: [1, 1, 1, 1, 1, 1]
+  gripper: true
+  assembly_offsets: [0.000, 0.000, 0.000, 0.000, 0.000, 0.000]  # rad (calibrate with get_offsets.py)
+  gripper_range_rad: [0.0, 0.0]  # [open_position_rad, closed_position_rad] (calibrate)
