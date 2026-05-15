@@ -1,11 +1,12 @@
 import os
 from dataclasses import dataclass
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 from gello.agents.agent import Agent
 from gello.robots.dynamixel import DynamixelRobot
+from gello.robots.zhonglin import ZhonglinRobot
 
 
 @dataclass
@@ -38,6 +39,42 @@ class DynamixelRobotConfig:
             real=True,
             joint_signs=list(self.joint_signs),
             port=port,
+            gripper_config=self.gripper_config,
+            start_joints=start_joints,
+        )
+
+
+@dataclass
+class ZhonglinRobotConfig:
+    joint_ids: Sequence[int]
+    """The joint ids of GELLO (not including the gripper). Usually (0, 1, 2 ...) for Zhonglin."""
+
+    joint_offsets: Sequence[float]
+    """The joint offsets of GELLO in radians."""
+
+    joint_signs: Sequence[int]
+    """The joint signs of GELLO. Should be either 1 or -1 per joint."""
+
+    gripper_config: Optional[Tuple[int, float, float]] = None
+    """Optional gripper config: (gripper_joint_id, degrees_open, degrees_closed)."""
+
+    baudrate: int = 115200
+    """Serial baudrate for Zhonglin servos."""
+
+    def __post_init__(self):
+        assert len(self.joint_ids) == len(self.joint_offsets)
+        assert len(self.joint_ids) == len(self.joint_signs)
+
+    def make_robot(
+        self, port: str = "/dev/ttyUSB0", start_joints: Optional[np.ndarray] = None
+    ) -> ZhonglinRobot:
+        return ZhonglinRobot(
+            joint_ids=self.joint_ids,
+            joint_offsets=list(self.joint_offsets),
+            real=True,
+            joint_signs=list(self.joint_signs),
+            port=port,
+            baudrate=self.baudrate,
             gripper_config=self.gripper_config,
             start_joints=start_joints,
         )
@@ -113,12 +150,17 @@ class GelloAgent(Agent):
         self,
         port: str,
         dynamixel_config: Optional[DynamixelRobotConfig] = None,
+        zhonglin_config: Optional[ZhonglinRobotConfig] = None,
         start_joints: Optional[np.ndarray] = None,
     ):
-        # Ensure start_joints is a numpy array if provided
         if start_joints is not None and not isinstance(start_joints, np.ndarray):
             start_joints = np.array(start_joints)
-        if dynamixel_config is not None:
+
+        if zhonglin_config is not None:
+            self._robot = zhonglin_config.make_robot(
+                port=port, start_joints=start_joints
+            )
+        elif dynamixel_config is not None:
             self._robot = dynamixel_config.make_robot(
                 port=port, start_joints=start_joints
             )
