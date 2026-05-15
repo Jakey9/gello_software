@@ -55,6 +55,17 @@ def launch_robot_server(port: int, args: Args):
             xml_path=xml, gripper_xml_path=gripper_xml, port=port, host=args.hostname
         )
         server.serve()
+    elif args.robot == "sim_lite6":
+        from gello.robots.sim_robot import MujocoRobotServer
+
+        MENAGERIE_ROOT: Path = (
+            Path(__file__).parent.parent / "third_party" / "mujoco_menagerie"
+        )
+        xml = MENAGERIE_ROOT / "ufactory_lite6" / "lite6.xml"
+        server = MujocoRobotServer(
+            xml_path=xml, gripper_xml_path=None, port=port, host=args.hostname
+        )
+        server.serve()
 
     else:
         if args.robot == "xarm":
@@ -67,7 +78,7 @@ def launch_robot_server(port: int, args: Args):
             robot = URRobot(robot_ip=args.robot_ip)
         else:
             raise NotImplementedError(
-                f"Robot {args.robot} not implemented, choose one of: sim_ur, xarm, ur, bimanual_ur, none"
+                f"Robot {args.robot} not implemented, choose one of: sim_ur, sim_panda, sim_lite6, xarm, ur, bimanual_ur, none"
             )
         server = ZMQServerRobot(robot, port=port, host=args.hostname)
         print(f"Starting robot server on port {port}")

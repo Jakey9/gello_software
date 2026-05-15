@@ -1,0 +1,19 @@
+robot:
+  _target_: gello.robots.sim_robot.MujocoRobotServer
+  xml_path: "third_party/mujoco_menagerie/ufactory_lite6/lite6.xml"
+  gripper_xml_path: null
+  host: "127.0.0.1"
+  port: 6001
+
+agent:
+  _target_: gello.agents.gello_agent.GelloAgent
+  port: "/dev/ttyUSB0"
+  zhonglin_config:
+    _target_: gello.agents.gello_agent.ZhonglinRobotConfig
+    joint_ids: [0, 1, 2, 3, 4, 5]
+    joint_offsets: [0, 0, 0, 0, 0, 0]
+    joint_signs: [1, 1, 1, 1, 1, 1]
+    gripper_config: null
+    baudrate: 115200
+
+hz: 30
