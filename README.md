@@ -17,7 +17,12 @@ For additional resources:
 - **Franka FER (Panda)**
 - **UR**
 - **xArm**
+- **UFFactory Lite6** (with Zhonglin servo motors)
 - add your own, see [Adding New Robots](#adding-new-robots)
+
+## Supported Motors
+- **Dynamixel** (XL330, XC330, XM430, etc.) -- original GELLO design
+- **Zhonglin** serial bus servos -- alternative low-cost option
 
 ## Quick Start
 
@@ -43,7 +48,7 @@ git submodule init
 git submodule update
 uv pip install -r requirements.txt
 uv pip install -e .
-uv pip install -e third_party/DynamixelSDK/python
+uv pip install -e third_party/DynamixelSDK/python  # Only needed for Dynamixel motors
 ```
 
 ### Option 2: Docker
@@ -109,6 +114,55 @@ Sample configs for the YAM arm and the xarm can be found in `configs`.
 - Uses `PORT_CONFIG_MAP` dictionary
 - Maps USB serial ports to robot configurations
 
+## Lite6 + Zhonglin Motor Setup
+
+If you are using a GELLO with **Zhonglin serial bus servos** (instead of Dynamixel) and a **UFFactory Lite6** robot, follow these steps. For a complete step-by-step guide with all test commands, see [`LITE6_GELLO_GUIDE.md`](LITE6_GELLO_GUIDE.md).
+
+### Zhonglin Motor Driver
+
+The Zhonglin driver (`gello/zhonglin/driver.py`) communicates over ASCII serial at 115200 baud. It implements the same `DynamixelDriverProtocol` interface so it works as a drop-in replacement throughout the codebase. No Dynamixel SDK is needed for Zhonglin motors.
+
+### Verify Servo Communication
+
+Plug in the GELLO USB cable and run:
+```bash
+python -m gello.zhonglin.driver
+```
+Move joints by hand and confirm angles update. Ctrl+C to stop.
+
+### Calibrate Joint Offsets
+
+Place the Lite6 at its home position (all zeros) and manually align the GELLO to match:
+```bash
+python scripts/zhonglin_get_offset.py \
+    --port /dev/ttyUSB0 \
+    --start-joints 0 0 0 0 0 0 \
+    --joint-signs 1 1 1 1 1 1
+```
+If a joint moves in the wrong direction, flip its sign to `-1` and re-run. Save the printed `joint_offsets`, `joint_signs`, and gripper values.
+
+### Simulation Test (MuJoCo)
+
+Test your GELLO against a simulated Lite6 with no real robot hardware:
+```bash
+# Without GELLO hardware (verify MuJoCo loads)
+python experiments/quick_run.py --robot sim_lite6 --agent dummy
+
+# With GELLO hardware
+python experiments/quick_run.py --robot sim_lite6 --agent gello --gello-port /dev/ttyUSB0
+```
+
+Or use the YAML config (edit `configs/lite6_sim_test.yaml` with your calibrated values first):
+```bash
+python experiments/launch_yaml.py --left-config-path configs/lite6_sim_test.yaml
+```
+
+### LeRobot Integration
+
+This GELLO setup integrates with [LeRobot](https://github.com/huggingface/lerobot) (UFFactory fork) for teleoperation and data collection. The `GelloLite6` teleoperator in LeRobot uses `ZhonglinDriver` and `GelloAgent` from this repository. See [`LITE6_GELLO_GUIDE.md`](LITE6_GELLO_GUIDE.md) for detailed instructions on running teleop and recording episodes.
+
+---
+
 ## Adding New Robots
 
 To integrate a new robot to the Python configs:
@@ -122,6 +176,7 @@ See existing implementations in `gello/robots/` for reference:
 - `ur.py` - Universal Robots
 - `xarm_robot.py` - xArm robots
 - `yam.py` - YAM robot
+- `zhonglin.py` - Zhonglin servo-based GELLO (e.g. for Lite6)
 
 =======
 
@@ -160,11 +215,20 @@ python scripts/gello_get_offset.py \
     --port /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTAAMLV6-if00-port0
 ```
 
+**UFFactory Lite6 (Zhonglin motors):**
+```bash
+python scripts/zhonglin_get_offset.py \
+    --port /dev/ttyUSB0 \
+    --start-joints 0 0 0 0 0 0 \
+    --joint-signs 1 1 1 1 1 1
+```
+
 **Joint Signs Reference:**
 - UR: `1 1 -1 1 1 1`
 - Panda: `1 -1 1 1 1 -1 1`
 - xArm: `1 1 1 1 1 1 1`
 - YAM: `1 -1 -1 -1 1 1`
+- Lite6 (Zhonglin): determine via `zhonglin_get_offset.py`
 
 Add the generated joint offsets to `gello/agents/gello_agent.py` in the `PORT_CONFIG_MAP`.
 
@@ -240,7 +304,7 @@ First, install robot-specific dependencies:
 **1. Launch the robot node:**
 ```bash
 # For simulation
-python experiments/launch_nodes.py --robot <sim_ur|sim_panda|sim_xarm>
+python experiments/launch_nodes.py --robot <sim_ur|sim_panda|sim_xarm|sim_lite6>
 
 # For real hardware
 python experiments/launch_nodes.py --robot <ur|panda|xarm>
@@ -317,16 +381,18 @@ python gello/factr/gravity_compensation.py --config configs/yam_gello_factr_hw.y
 ### Code Organization
 
 ```
-├── scripts/             # Utility scripts
+├── scripts/             # Utility scripts (incl. zhonglin_get_offset.py)
 ├── experiments/         # Entry points and launch scripts
+├── configs/             # YAML configs (incl. lite6_sim_test.yaml)
 ├── gello/               # Core GELLO package
-│   ├── agents/          # Teleoperation agents
+│   ├── agents/          # Teleoperation agents (GelloAgent, configs)
 │   ├── cameras/         # Camera interfaces
 │   ├── data_utils/      # Data processing utilities
 │   ├── dm_control_tasks/# MuJoCo environment utilities
 │   ├── dynamixel/       # Dynamixel hardware interface
-|   ├── factr/           # gravity compensation
-│   ├── robots/          # Robot-specific interfaces
+│   ├── zhonglin/        # Zhonglin serial bus servo interface
+│   ├── factr/           # Gravity compensation
+│   ├── robots/          # Robot-specific interfaces (incl. zhonglin.py)
 │   ├── utils/           # Shared launch and control utilities
 │   └── zmq_core/        # ZMQ multiprocessing utilities
 ```
