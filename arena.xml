@@ -1,0 +1,105 @@
+<mujoco model="unnamed_model">
+  <compiler autolimits="true" angle="radian"/>
+  <option integrator="implicitfast"/>
+  <default>
+    <default class="/"/>
+    <default class="ufactory_lite6/">
+      <default class="ufactory_lite6/lite6">
+        <joint axis="0 0 1" armature="0.10000000000000001" damping="1"/>
+        <geom type="mesh"/>
+        <site group="4" rgba="0.5 0.5 0.5 0.29999999999999999" size="0.001"/>
+        <position kp="2000" kv="200"/>
+        <default class="ufactory_lite6/size1">
+          <position forcerange="-50 50"/>
+        </default>
+        <default class="ufactory_lite6/size2">
+          <position forcerange="-32 32"/>
+        </default>
+        <default class="ufactory_lite6/size3">
+          <position forcerange="-20 20"/>
+        </default>
+        <default class="ufactory_lite6/visual">
+          <geom contype="0" conaffinity="0" group="2" material="ufactory_lite6/white"/>
+        </default>
+        <default class="ufactory_lite6/collision">
+          <geom group="3" mass="0" density="0"/>
+        </default>
+      </default>
+    </default>
+  </default>
+  <asset>
+    <material name="ufactory_lite6/white" class="ufactory_lite6/" rgba="1 1 1 1"/>
+    <material name="ufactory_lite6/silver" class="ufactory_lite6/" rgba="0.753 0.753 0.753 1"/>
+    <mesh name="ufactory_lite6/link_base" class="ufactory_lite6/" file="link_base-be109ae0a2195bb2544325ade5a94dc74ae484af.stl"/>
+    <mesh name="ufactory_lite6/link1" class="ufactory_lite6/" file="link1-2fd20f164dae91ad36f5151ff9cb7f9d3a24ca8f.stl"/>
+    <mesh name="ufactory_lite6/link2" class="ufactory_lite6/" file="link2-a7393179d0947fb94fa13089f29352895d1cff16.stl"/>
+    <mesh name="ufactory_lite6/link3" class="ufactory_lite6/" file="link3-4bae5b09a7d1adb8321324a42d164368c6e6e403.stl"/>
+    <mesh name="ufactory_lite6/link4" class="ufactory_lite6/" file="link4-6a96d7e24ecee360158fa9c9d7d5458791f1f769.stl"/>
+    <mesh name="ufactory_lite6/link5" class="ufactory_lite6/" file="link5-455c8d563722d820e93bc119c0425199e03568e2.stl"/>
+    <mesh name="ufactory_lite6/link6" class="ufactory_lite6/" file="link6-1703f86d635a731cb558c7e06e3b05d7ecdda883.stl"/>
+    <mesh name="ufactory_lite6/link_base_c" class="ufactory_lite6/" file="link_base-0ae4e94f9b16410210522defea65527adfa22c27.stl"/>
+    <mesh name="ufactory_lite6/link1_c" class="ufactory_lite6/" file="link1-ec5ede6f6bc42ceb4ca63feb3ec7fecb2d199ab7.stl"/>
+    <mesh name="ufactory_lite6/link2_c" class="ufactory_lite6/" file="link2-e693466069aac9ddc1433ecc3c081de48e597093.stl"/>
+    <mesh name="ufactory_lite6/link3_c" class="ufactory_lite6/" file="link3-b0d05633d084c2042f7686a980670f950b0c514b.stl"/>
+    <mesh name="ufactory_lite6/link4_c" class="ufactory_lite6/" file="link4-9fba6d390ee2cfdb80026a7e8b61cdb327920f55.stl"/>
+    <mesh name="ufactory_lite6/link5_c" class="ufactory_lite6/" file="link5-afb319d3e93a38cb0605b55471c405298a86077f.stl"/>
+    <mesh name="ufactory_lite6/link6_c" class="ufactory_lite6/" file="link6-ece28c8b84147850e8789332fd77ae0f12495712.stl"/>
+  </asset>
+  <worldbody>
+    <body name="ufactory_lite6/">
+      <body name="ufactory_lite6/link_base" childclass="ufactory_lite6/lite6">
+        <inertial pos="-0.0082954499999999994 3.2635700000000003e-05 0.063119499999999995" mass="1.65394" diaginertia="0 0 0"/>
+        <geom name="ufactory_lite6//unnamed_geom_0" class="ufactory_lite6/visual" mesh="ufactory_lite6/link_base"/>
+        <geom name="ufactory_lite6/link_base_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link_base_c"/>
+        <body name="ufactory_lite6/link1" pos="0 0 0.24349999999999999">
+          <inertial pos="-0.00036000000000000002 0.041950000000000001 -0.0025000000000000001" quat="0.60805900000000002 0.79234899999999997 -0.043870699999999999 0.022871800000000001" mass="1.411" diaginertia="0.00145276 0.00135275 0.00085335499999999998"/>
+          <joint name="ufactory_lite6/joint1" range="-6.2831900000000003 6.2831900000000003"/>
+          <geom name="ufactory_lite6//unnamed_geom_2" class="ufactory_lite6/visual" mesh="ufactory_lite6/link1"/>
+          <geom name="ufactory_lite6/link1_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link1_c"/>
+          <body name="ufactory_lite6/link2" quat="-1 1 1 1">
+            <inertial pos="0.17899999999999999 0 0.058400000000000001" quat="0.41756100000000002 0.57161899999999999 0.56958500000000001 0.41769299999999998" mass="1.3400000000000001" diaginertia="0.0056097100000000004 0.0052151999999999997 0.00122018"/>
+            <joint name="ufactory_lite6/joint2" range="-2.6179899999999998 2.6179899999999998"/>
+            <geom name="ufactory_lite6//unnamed_geom_4" class="ufactory_lite6/visual" mesh="ufactory_lite6/link2"/>
+            <geom name="ufactory_lite6/link2_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link2_c"/>
+            <body name="ufactory_lite6/link3" pos="0.20019999999999999 0 0" quat="-2.5973399999999999e-06 -0.70710499999999998 -0.70710799999999996 -2.5973499999999998e-06">
+              <inertial pos="0.071999999999999995 -0.035700000000000003 -0.001" quat="0.12825900000000001 0.66296299999999997 -0.16725599999999999 0.71836999999999995" mass="0.95299999999999996" diaginertia="0.0018521 0.0017554599999999999 0.00070380699999999998"/>
+              <joint name="ufactory_lite6/joint3" range="-0.061087000000000002 5.2359900000000001"/>
+              <geom name="ufactory_lite6//unnamed_geom_6" class="ufactory_lite6/visual" mesh="ufactory_lite6/link3"/>
+              <geom name="ufactory_lite6/link3_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link3_c"/>
+              <body name="ufactory_lite6/link4" pos="0.086999999999999994 -0.22761000000000001 0" quat="0.70710499999999998 0.70710799999999996 0 0">
+                <inertial pos="-0.002 -0.028500000000000001 -0.081299999999999997" quat="0.975248 0.22109000000000001 0.00203498 -0.0026217800000000002" mass="1.284" diaginertia="0.0037050300000000002 0.0034909099999999998 0.0010958599999999999"/>
+                <joint name="ufactory_lite6/joint4" range="-6.2831900000000003 6.2831900000000003"/>
+                <geom name="ufactory_lite6//unnamed_geom_8" class="ufactory_lite6/visual" mesh="ufactory_lite6/link4"/>
+                <geom name="ufactory_lite6/link4_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link4_c"/>
+                <body name="ufactory_lite6/link5" quat="1 1 0 0">
+                  <inertial pos="0 0.01 0.0019" quat="0.71423000000000003 0.69638800000000001 -0.053193299999999999 0.045699700000000003" mass="0.80400000000000005" diaginertia="0.00056755300000000005 0.00052926600000000002 0.00050768099999999995"/>
+                  <joint name="ufactory_lite6/joint5" range="-2.1642000000000001 2.1642000000000001"/>
+                  <geom name="ufactory_lite6//unnamed_geom_10" class="ufactory_lite6/visual" mesh="ufactory_lite6/link5"/>
+                  <geom name="ufactory_lite6/link5_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link5_c"/>
+                  <body name="ufactory_lite6/link6" pos="0 0.0625 0" quat="1 -1 0 0">
+                    <inertial pos="0 -0.0019400000000000001 -0.010200000000000001" quat="-0.037602299999999998 0.70405700000000004 0.044683800000000003 0.70773799999999998" mass="0.13" diaginertia="0.00014814799999999999 8.5775700000000006e-05 7.7141199999999999e-05"/>
+                    <joint name="ufactory_lite6/joint6" range="-6.2831900000000003 6.2831900000000003"/>
+                    <geom name="ufactory_lite6//unnamed_geom_12" class="ufactory_lite6/visual" material="ufactory_lite6/silver" mesh="ufactory_lite6/link6"/>
+                    <geom name="ufactory_lite6/link6_c" class="ufactory_lite6/collision" mesh="ufactory_lite6/link6_c"/>
+                    <site name="ufactory_lite6/attachment_site"/>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="ufactory_lite6//unnamed_actuator_0" class="ufactory_lite6/size1" ctrlrange="-6.2831900000000003 6.2831900000000003" joint="ufactory_lite6/joint1"/>
+    <position name="ufactory_lite6//unnamed_actuator_1" class="ufactory_lite6/size1" ctrlrange="-2.6179899999999998 2.6179899999999998" joint="ufactory_lite6/joint2"/>
+    <position name="ufactory_lite6//unnamed_actuator_2" class="ufactory_lite6/size2" ctrlrange="-0.061087000000000002 5.2359900000000001" joint="ufactory_lite6/joint3"/>
+    <position name="ufactory_lite6//unnamed_actuator_3" class="ufactory_lite6/size2" ctrlrange="-6.2831900000000003 6.2831900000000003" joint="ufactory_lite6/joint4"/>
+    <position name="ufactory_lite6//unnamed_actuator_4" class="ufactory_lite6/size2" ctrlrange="-2.1642000000000001 2.1642000000000001" joint="ufactory_lite6/joint5"/>
+    <position name="ufactory_lite6//unnamed_actuator_5" class="ufactory_lite6/size3" ctrlrange="-6.2831900000000003 6.2831900000000003" joint="ufactory_lite6/joint6"/>
+  </actuator>
+  <keyframe>
+    <key name="ufactory_lite6/home" qpos="0 0 1.5700000000000001 0 1.5700000000000001 0" ctrl="0 0 1.5700000000000001 0 1.5700000000000001 0"/>
+  </keyframe>
+</mujoco>

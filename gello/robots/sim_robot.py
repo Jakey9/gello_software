@@ -138,8 +138,10 @@ class MujocoRobotServer:
         host: str = "127.0.0.1",
         port: int = 5556,
         print_joints: bool = False,
+        allow_gui_control: bool = True,
     ):
         self._has_gripper = gripper_xml_path is not None
+        self._allow_gui_control = allow_gui_control
         arena = build_scene(xml_path, gripper_xml_path)
 
         assets: Dict[str, str] = {}
@@ -219,13 +221,20 @@ class MujocoRobotServer:
         # start the zmq server
         self._zmq_server_thread.start()
         with mujoco.viewer.launch_passive(self._model, self._data) as viewer:
+            last_zmq_cmd = self._joint_cmd.copy()
+            
             while viewer.is_running():
                 step_start = time.time()
 
-                # mj_step can be replaced with code that also evaluates
-                # a policy and applies a control signal before stepping the physics.
-                self._data.ctrl[:] = self._joint_cmd
-                # self._data.qpos[:] = self._joint_cmd
+                # Only override GUI controls if:
+                # 1. allow_gui_control is False, OR
+                # 2. A new command was received from ZMQ
+                if not self._allow_gui_control or not np.allclose(self._joint_cmd, last_zmq_cmd):
+                    self._data.ctrl[:] = self._joint_cmd
+                    last_zmq_cmd = self._joint_cmd.copy()
+                
+                # Otherwise, let the GUI slider control self._data.ctrl
+                
                 mujoco.mj_step(self._model, self._data)
                 self._joint_state = self._data.qpos.copy()[: self._num_joints]
 
