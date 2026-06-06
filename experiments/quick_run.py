@@ -126,8 +126,8 @@ def main(args: Args):
             )
         agent = GelloAgent(port=gello_port, zhonglin_config=zhonglin_config)
 
-        reset_joints = np.array([0, 0, 0, -np.pi, 0, np.pi, 0, 0])
         curr_joints = env.get_obs()["joint_positions"]
+        reset_joints = np.zeros_like(curr_joints)
         if reset_joints.shape == curr_joints.shape:
             max_delta = (np.abs(curr_joints - reset_joints)).max()
             steps = min(int(max_delta / 0.01), 100)
@@ -153,6 +153,10 @@ def main(args: Args):
     obs = env.get_obs()
     joints = obs["joint_positions"]
 
+    # trim leader arm output to match sim DOFs (e.g. drop gripper)
+    if len(start_pos) > len(joints):
+        start_pos = start_pos[: len(joints)]
+
     abs_deltas = np.abs(start_pos - joints)
     id_max_joint_delta = np.argmax(abs_deltas)
 
@@ -177,10 +181,12 @@ def main(args: Args):
         joints
     ), f"agent output dim = {len(start_pos)}, but env dim = {len(joints)}"
 
+    num_sim_dofs = len(joints)
+
     max_delta = 0.05
     for _ in range(25):
         obs = env.get_obs()
-        command_joints = agent.act(obs)
+        command_joints = agent.act(obs)[:num_sim_dofs]
         current_joints = obs["joint_positions"]
         delta = command_joints - current_joints
         max_joint_delta = np.abs(delta).max()
@@ -190,11 +196,10 @@ def main(args: Args):
 
     obs = env.get_obs()
     joints = obs["joint_positions"]
-    action = agent.act(obs)
+    action = agent.act(obs)[:num_sim_dofs]
     if (action - joints > 0.5).any():
         print("Action is too big")
 
-        # print which joints are too big
         joint_index = np.where(action - joints > 0.8)
         for j in joint_index:
             print(
@@ -203,7 +208,7 @@ def main(args: Args):
         exit()
 
     while True:
-        action = agent.act(obs)
+        action = agent.act(obs)[:num_sim_dofs]
         obs = env.step(action)
 
 
