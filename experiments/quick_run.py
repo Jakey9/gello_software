@@ -120,7 +120,7 @@ def main(args: Args):
         if args.robot == "sim_lite6":
             zhonglin_config = ZhonglinRobotConfig(
                 joint_ids=(0, 1, 2, 3, 4, 5),
-                joint_offsets=(3.1416, 1.5708, 0, 0, 0, 0),  # TODO: re-calibrate joints 2-5
+                joint_offsets=(2.5258, 2.2172, 0, 0, 0, 0),  # TODO: re-calibrate joints 2-5
                 joint_signs=(1, 1, 1, 1, 1, 1),
                 gripper_config=(6, -0.2, -42.0),
             )
