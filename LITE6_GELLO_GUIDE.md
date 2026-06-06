@@ -52,7 +52,7 @@ All commands assume you've already done `pip install -e .` in both `gello_softwa
 Verifies the Zhonglin servos respond over serial. No robot needed, just plug in the GELLO USB.
 
 ```bash
-cd /home/jake.tan/P_PAI/gello_software
+cd /gello_software
 python -m gello.zhonglin.driver
 ```
 
@@ -65,7 +65,7 @@ Move GELLO joints by hand. You should see angles in radians and degrees updating
 Move the Lite6 to home position (all zeros). Manually align the GELLO to match. Then:
 
 ```bash
-cd /home/jake.tan/P_PAI/gello_software
+cd /gello_software
 python scripts/zhonglin_get_offset.py \
     --port /dev/ttyUSB0 \
     --start-joints 0 0 0 0 0 0 \
@@ -81,7 +81,7 @@ If joints move in the wrong direction, flip the corresponding sign to `-1` and r
 Verifies the full stack: driver -> robot -> agent, with your calibrated values.
 
 ```bash
-cd /home/jake.tan/P_PAI/gello_software
+cd /gello_software
 python -c "
 import numpy as np
 from gello.agents.gello_agent import GelloAgent, ZhonglinRobotConfig
@@ -110,7 +110,7 @@ No real robot needed. Opens a MuJoCo viewer with Lite6 that follows the GELLO.
 **Option A -- quick_run (simplest):**
 
 ```bash
-cd /home/jake.tan/P_PAI/gello_software
+cd /gello_software
 python experiments/quick_run.py \
     --robot sim_lite6 \
     --agent gello \
@@ -137,7 +137,7 @@ python experiments/launch_yaml.py \
 Verifies the gripper hardware via Modbus. No GELLO needed, just the Lite6 + gripper.
 
 ```bash
-cd /home/jake.tan/P_PAI/OpenParallelGripper/XL330_version/software/examples
+cd /OpenParallelGripper/XL330_version/software/examples
 python control_openRB150_with_modbus_rtu.py 192.168.1.85 ocs
 ```
 
@@ -155,7 +155,7 @@ First update `lite6_gello_record_config.yaml` with your calibrated values:
 Then run the teleop test:
 
 ```bash
-cd /home/jake.tan/P_PAI/lerobot
+cd /lerobot
 python src/lerobot/ufactory_usage/uf_robot_teleop_test.py \
     -c src/lerobot/ufactory_usage/config/lite6_gello_record_config.yaml
 ```
@@ -167,7 +167,7 @@ Move the GELLO -- Lite6 follows. Squeeze GELLO gripper -- OpenParallelGripper cl
 ### Test 7: Record training episodes (lerobot, full pipeline)
 
 ```bash
-cd /home/jake.tan/P_PAI/lerobot
+cd /lerobot
 python src/lerobot/ufactory_usage/uf_robot_record.py \
     -c src/lerobot/ufactory_usage/config/lite6_gello_record_config.yaml
 ```
