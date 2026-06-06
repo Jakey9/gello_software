@@ -1,6 +1,5 @@
 import re
 import time
-from threading import Event, Lock, Thread
 from typing import Optional, Sequence, Tuple
 
 import numpy as np
@@ -69,6 +68,7 @@ class ZhonglinDriver(DynamixelDriverProtocol):
 
     These servos are used as passive (read-only) joints on the GELLO leader arm.
     Position is read via the PRAD command; write operations are not supported.
+    Matches the proven synchronous protocol from servo_zero.py.
     """
 
     def __init__(
@@ -76,32 +76,20 @@ class ZhonglinDriver(DynamixelDriverProtocol):
         ids: Sequence[int],
         port: str = "/dev/ttyUSB0",
         baudrate: int = 115200,
-        timeout: float = 0.01,
-        read_delay: float = 0.01,
     ):
         self._ids = list(ids)
-        self._port = port
-        self._baudrate = baudrate
-        self._timeout = timeout
-        self._read_delay = read_delay
-
-        self._joint_angles: Optional[np.ndarray] = None
-        self._lock = Lock()
-        self._stop_thread = Event()
         self._torque_enabled = False
 
-        self._ser = serial.Serial(port, baudrate, timeout=timeout)
+        self._ser = serial.Serial(port, baudrate, timeout=0.01)
         print(f"[ZhonglinDriver] Serial port opened: {port}")
 
         self._init_servos()
-        self._start_reading_thread()
 
     def _send_command(self, cmd: str) -> str:
-        self._ser.reset_input_buffer()
         self._ser.write(cmd.encode("ascii"))
-        self._ser.flush()
-        time.sleep(self._read_delay)
-        return self._ser.read_all().decode("ascii", errors="ignore")
+        time.sleep(0.01)
+        response = self._ser.read_all()
+        return response.decode("ascii", errors="ignore")
 
     def _init_servos(self):
         """Run the Zhonglin init sequence: version check, unload torque."""
@@ -111,28 +99,14 @@ class ZhonglinDriver(DynamixelDriverProtocol):
             print(f"[ZhonglinDriver] Servo {servo_id} torque released: {response.strip()}")
         print(f"[ZhonglinDriver] Initialized {len(self._ids)} servos, torque unloaded")
 
-    def _start_reading_thread(self):
-        self._ser.reset_input_buffer()
-        self._reading_thread = Thread(target=self._read_joint_states, daemon=True)
-        self._reading_thread.start()
-
-    def _read_joint_states(self):
-        try:
-            while not self._stop_thread.is_set():
-                angles = np.zeros(len(self._ids), dtype=float)
-                all_ok = True
-                for i, servo_id in enumerate(self._ids):
-                    with self._lock:
-                        response = self._send_command(f"#{servo_id:03d}PRAD!")
-                    angle = pwm_to_radians(response.strip())
-                    if angle is not None:
-                        angles[i] = angle
-                    else:
-                        all_ok = False
-                if all_ok:
-                    self._joint_angles = angles
-        except Exception as e:
-            print(f"[ZhonglinDriver] Reading thread crashed: {e}")
+    def _read_all_joints(self) -> np.ndarray:
+        angles = np.zeros(len(self._ids), dtype=float)
+        for i, servo_id in enumerate(self._ids):
+            response = self._send_command(f"#{servo_id:03d}PRAD!")
+            angle = pwm_to_radians(response.strip())
+            if angle is not None:
+                angles[i] = angle
+        return angles
 
     # -- DynamixelDriverProtocol interface --
 
@@ -156,15 +130,12 @@ class ZhonglinDriver(DynamixelDriverProtocol):
 
     def set_torque_mode(self, enable: bool):
         if not enable:
-            with self._lock:
-                for servo_id in self._ids:
-                    self._send_command(f"#{servo_id:03d}PULK!")
+            for servo_id in self._ids:
+                self._send_command(f"#{servo_id:03d}PULK!")
         self._torque_enabled = enable
 
     def get_joints(self) -> np.ndarray:
-        while self._joint_angles is None:
-            time.sleep(0.01)
-        return self._joint_angles.copy()
+        return self._read_all_joints()
 
     def get_positions_and_velocities(self) -> Tuple[np.ndarray, np.ndarray]:
         positions = self.get_joints()
@@ -172,8 +143,6 @@ class ZhonglinDriver(DynamixelDriverProtocol):
         return positions, velocities
 
     def close(self):
-        self._stop_thread.set()
-        self._reading_thread.join(timeout=2.0)
         if self._ser.is_open:
             self._ser.close()
         print("[ZhonglinDriver] Closed")
