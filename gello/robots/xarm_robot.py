@@ -123,22 +123,24 @@ class XArmRobot(Robot):
     DEFAULT_MAX_DELTA = 0.05
 
     def num_dofs(self) -> int:
-        return 8
+        return self._num_arm_joints + 1
 
     def get_joint_state(self) -> np.ndarray:
         state = self.get_state()
         gripper = state.gripper_pos()
-        all_dofs = np.concatenate([state.joints(), np.array([gripper])])
-        return all_dofs
+        joints = state.joints()[: self._num_arm_joints]
+        return np.concatenate([joints, np.array([gripper])])
 
     def command_joint_state(self, joint_state: np.ndarray) -> None:
-        if len(joint_state) == 7:
+        n = self._num_arm_joints
+        if len(joint_state) == n:
             self.set_command(joint_state, None)
-        elif len(joint_state) == 8:
-            self.set_command(joint_state[:7], joint_state[7])
+        elif len(joint_state) == n + 1:
+            self.set_command(joint_state[:n], joint_state[n])
         else:
             raise ValueError(
-                f"Invalid joint state: {joint_state}, len={len(joint_state)}"
+                f"Invalid joint state: {joint_state}, len={len(joint_state)}, "
+                f"expected {n} or {n + 1}"
             )
 
     def stop(self):
@@ -155,10 +157,12 @@ class XArmRobot(Robot):
         real: bool = True,
         control_frequency: float = 50.0,
         max_delta: float = DEFAULT_MAX_DELTA,
+        num_arm_joints: int = 7,
     ):
         print(ip)
         self.real = real
         self.max_delta = max_delta
+        self._num_arm_joints = num_arm_joints
         if real:
             from xarm.wrapper import XArmAPI
 
@@ -249,9 +253,9 @@ class XArmRobot(Robot):
             # update last state
             self.last_state = self._update_last_state()
             with self.target_command_lock:
-                joint_delta = np.array(
-                    self.target_command["joints"] - self.last_state.joints()
-                )
+                current_joints = self.last_state.joints()[: self._num_arm_joints]
+                target_joints = self.target_command["joints"][: self._num_arm_joints]
+                joint_delta = np.array(target_joints - current_joints)
                 gripper_command = self.target_command["gripper"]
 
             norm = np.linalg.norm(joint_delta)
@@ -264,7 +268,7 @@ class XArmRobot(Robot):
 
             # command position
             self._set_position(
-                self.last_state.joints() + delta,
+                current_joints + delta,
             )
 
             if gripper_command is not None:

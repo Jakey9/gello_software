@@ -56,43 +56,40 @@ def get_config(args: Args) -> None:
     joint_ids = list(range(args.num_joints))
     driver = ZhonglinDriver(joint_ids, port=args.port, baudrate=args.baudrate)
 
+    # warm-up reads
     for _ in range(20):
         driver.get_joints()
 
-    def get_error(offset: float, index: int, joint_state: np.ndarray) -> float:
-        joint_sign_i = args.joint_signs[index]
-        joint_i = joint_sign_i * (joint_state[index] - offset)
-        start_i = args.start_joints[index]
-        return float(np.abs(joint_i - start_i))
+    # average multiple reads for stability
+    num_samples = 50
+    samples = np.array([driver.get_joints() for _ in range(num_samples)])
+    curr_joints = np.mean(samples, axis=0)
 
-    best_offsets = []
-    curr_joints = driver.get_joints()
     print(f"\nRaw servo positions (rad): {[f'{x:.4f}' for x in curr_joints]}")
     print(f"Raw servo positions (deg): {[f'{np.rad2deg(x):.1f}' for x in curr_joints]}")
 
+    # offset = raw_reading - target / sign
+    # so that: sign * (raw - offset) = target
+    offsets = []
     for i in range(args.num_robot_joints):
-        best_offset = 0.0
-        best_error = 1e6
-        for offset in np.linspace(-8 * np.pi, 8 * np.pi, 8 * 4 + 1):
-            error = get_error(offset, i, curr_joints)
-            if error < best_error:
-                best_error = error
-                best_offset = offset
-        best_offsets.append(best_offset)
+        sign_i = args.joint_signs[i]
+        target_i = args.start_joints[i]
+        offset_i = curr_joints[i] - target_i / sign_i
+        offsets.append(offset_i)
+
+    # verify: compute what the sim would see with these offsets
+    verify = []
+    for i in range(args.num_robot_joints):
+        sim_val = args.joint_signs[i] * (curr_joints[i] - offsets[i])
+        verify.append(sim_val)
 
     print()
     print("=" * 60)
     print("CALIBRATION RESULTS")
     print("=" * 60)
-    print(f"joint_offsets (raw)        : {[f'{x:.4f}' for x in best_offsets]}")
-    print(
-        "joint_offsets (as pi/2)    : ["
-        + ", ".join(
-            [f"{int(np.round(x / (np.pi / 2)))}*np.pi/2" for x in best_offsets]
-        )
-        + "]"
-    )
+    print(f"joint_offsets              : {[round(x, 4) for x in offsets]}")
     print(f"joint_signs                : {list(args.joint_signs)}")
+    print(f"verification (should match start_joints): {[round(x, 4) for x in verify]}")
 
     if args.gripper:
         gripper_rad = curr_joints[-1]
@@ -100,8 +97,14 @@ def get_config(args: Args) -> None:
         print(f"gripper_open  (degrees)    : {np.rad2deg(gripper_rad) - 0.2:.1f}")
         print(f"gripper_close (degrees)    : {np.rad2deg(gripper_rad) - 42:.1f}")
 
+    offsets_str = ", ".join([f"{x:.4f}" for x in offsets])
     print()
-    print("Copy these into your GelloLite6Config / ZhonglinRobotConfig.")
+    print("--- Copy-paste for quick_run.py ---")
+    print(f"joint_offsets=({offsets_str}),")
+    print()
+    print("--- Copy-paste for lite6_sim_test.yaml ---")
+    yaml_str = ", ".join([f"{x:.4f}" for x in offsets])
+    print(f"joint_offsets: [{yaml_str}]")
     print("=" * 60)
 
     driver.close()

@@ -1,0 +1,20 @@
+robot:
+  _target_: gello.robots.xarm_robot.XArmRobot
+  ip: "192.168.1.226"           # TODO: set your Lite6 IP address
+  real: true
+  control_frequency: 50.0
+  max_delta: 0.05
+  num_arm_joints: 6
+
+agent:
+  _target_: gello.agents.gello_agent.GelloAgent
+  port: "/dev/ttyUSB0"
+  zhonglin_config:
+    _target_: gello.agents.gello_agent.ZhonglinRobotConfig
+    joint_ids: [0, 1, 2, 3, 4, 5]
+    joint_offsets: [3.1416, 1.5708, 0, 0, 0, 0]  # TODO: re-calibrate with all servos
+    joint_signs: [1, 1, 1, 1, 1, 1]
+    gripper_config: [6, -0.2, -42.0]
+    baudrate: 115200
+
+hz: 30
