@@ -97,7 +97,9 @@ class ZhonglinDriver(DynamixelDriverProtocol):
         self._start_reading_thread()
 
     def _send_command(self, cmd: str) -> str:
+        self._ser.reset_input_buffer()
         self._ser.write(cmd.encode("ascii"))
+        self._ser.flush()
         time.sleep(self._read_delay)
         return self._ser.read_all().decode("ascii", errors="ignore")
 
@@ -110,23 +112,27 @@ class ZhonglinDriver(DynamixelDriverProtocol):
         print(f"[ZhonglinDriver] Initialized {len(self._ids)} servos, torque unloaded")
 
     def _start_reading_thread(self):
+        self._ser.reset_input_buffer()
         self._reading_thread = Thread(target=self._read_joint_states, daemon=True)
         self._reading_thread.start()
 
     def _read_joint_states(self):
-        while not self._stop_thread.is_set():
-            angles = np.zeros(len(self._ids), dtype=float)
-            all_ok = True
-            for i, servo_id in enumerate(self._ids):
-                with self._lock:
-                    response = self._send_command(f"#{servo_id:03d}PRAD!")
-                angle = pwm_to_radians(response.strip())
-                if angle is not None:
-                    angles[i] = angle
-                else:
-                    all_ok = False
-            if all_ok:
-                self._joint_angles = angles
+        try:
+            while not self._stop_thread.is_set():
+                angles = np.zeros(len(self._ids), dtype=float)
+                all_ok = True
+                for i, servo_id in enumerate(self._ids):
+                    with self._lock:
+                        response = self._send_command(f"#{servo_id:03d}PRAD!")
+                    angle = pwm_to_radians(response.strip())
+                    if angle is not None:
+                        angles[i] = angle
+                    else:
+                        all_ok = False
+                if all_ok:
+                    self._joint_angles = angles
+        except Exception as e:
+            print(f"[ZhonglinDriver] Reading thread crashed: {e}")
 
     # -- DynamixelDriverProtocol interface --
 
