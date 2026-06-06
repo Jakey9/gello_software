@@ -76,8 +76,8 @@ class ZhonglinDriver(DynamixelDriverProtocol):
         ids: Sequence[int],
         port: str = "/dev/ttyUSB0",
         baudrate: int = 115200,
-        timeout: float = 0.1,
-        read_delay: float = 0.008,
+        timeout: float = 0.01,
+        read_delay: float = 0.01,
     ):
         self._ids = list(ids)
         self._port = port
@@ -102,11 +102,11 @@ class ZhonglinDriver(DynamixelDriverProtocol):
         return self._ser.read_all().decode("ascii", errors="ignore")
 
     def _init_servos(self):
-        """Run the Zhonglin init sequence: version check, bus setup, unload torque."""
-        self._send_command("#000PVER!")
+        """Run the Zhonglin init sequence: version check, unload torque."""
+        self._send_command(f"#{self._ids[0]:03d}PVER!")
         for servo_id in self._ids:
-            self._send_command("#000PCSK!")
-            self._send_command(f"#{servo_id:03d}PULK!")
+            response = self._send_command(f"#{servo_id:03d}PULK!")
+            print(f"[ZhonglinDriver] Servo {servo_id} torque released: {response.strip()}")
         print(f"[ZhonglinDriver] Initialized {len(self._ids)} servos, torque unloaded")
 
     def _start_reading_thread(self):
