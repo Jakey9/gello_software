@@ -33,11 +33,11 @@ def pwm_to_angle(response_str, pwm_min=500, pwm_max=2500, angle_range=270):
 
 
 def scan_servos(ser, max_id=15, delay=0.01):
-    """Probe each ID with PRAD and return list of (id, angle_deg, raw_response)."""
+    """Probe each ID: unlock torque (PULK), then read position (PRAD)."""
     found = []
     for sid in range(max_id + 1):
-        cmd = f"#{sid:03d}PRAD!"
-        raw = send_command(ser, cmd, delay=delay)
+        send_command(ser, f"#{sid:03d}PULK!", delay=delay)
+        raw = send_command(ser, f"#{sid:03d}PRAD!", delay=delay)
         angle = pwm_to_angle(raw.strip())
         if angle is not None:
             found.append((sid, angle, raw.strip()))

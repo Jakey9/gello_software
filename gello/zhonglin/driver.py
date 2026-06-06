@@ -149,7 +149,7 @@ class ZhonglinDriver(DynamixelDriverProtocol):
 
 
 def main():
-    ids = list(range(1, 7))
+    ids = list(range(7))
     driver = ZhonglinDriver(ids)
     try:
         while True:
