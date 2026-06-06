@@ -137,6 +137,14 @@ def main(args):
                 "_target_": "gello.agents.gello_agent.GelloAgent",
                 "port": gello_port,
                 "start_joints": args.start_joints,
+                "zhonglin_config": {
+                    "_target_": "gello.agents.gello_agent.ZhonglinRobotConfig",
+                    "joint_ids": [0, 1, 2, 3, 4, 5],
+                    "joint_offsets": [3.1416, 1.5708, 0, 0, 0, 0],  # TODO: update after calibration
+                    "joint_signs": [1, 1, 1, 1, 1, 1],
+                    "gripper_config": [6, -0.2, -42.0],
+                    "baudrate": 115200,
+                },
             }
             if args.start_joints is None:
                 reset_joints = np.deg2rad(
@@ -182,6 +190,10 @@ def main(args):
     obs = env.get_obs()
     joints = obs["joint_positions"]
 
+    num_env_dofs = len(joints)
+    if len(start_pos) > num_env_dofs:
+        start_pos = start_pos[:num_env_dofs]
+
     abs_deltas = np.abs(start_pos - joints)
     id_max_joint_delta = np.argmax(abs_deltas)
 
@@ -209,7 +221,7 @@ def main(args):
     max_delta = 0.05
     for _ in range(25):
         obs = env.get_obs()
-        command_joints = agent.act(obs)
+        command_joints = agent.act(obs)[:num_env_dofs]
         current_joints = obs["joint_positions"]
         delta = command_joints - current_joints
         max_joint_delta = np.abs(delta).max()
@@ -219,7 +231,7 @@ def main(args):
 
     obs = env.get_obs()
     joints = obs["joint_positions"]
-    action = agent.act(obs)
+    action = agent.act(obs)[:num_env_dofs]
     if (action - joints > 0.5).any():
         print("Action is too big")
 
