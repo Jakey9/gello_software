@@ -11,6 +11,8 @@
 | `gello/robots/zhonglin.py` | `ZhonglinRobot` -- implements `Robot` protocol, wraps `ZhonglinDriver` with offsets/signs/gripper normalization |
 | `scripts/zhonglin_get_offset.py` | Calibration script to determine joint offsets and signs |
 | `configs/lite6_sim_test.yaml` | YAML config for GELLO + simulated Lite6 in MuJoCo |
+| `configs/lite6_hw.yaml` | YAML config for GELLO + real Lite6 hardware |
+| `gello/zhonglin/servo_scan.py` | Debug script to scan servo bus and discover connected IDs |
 
 ### gello_software -- Modified Files
 
@@ -103,11 +105,17 @@ At home position, joints should read near zero. Gripper should go 0 (open) to 1 
 
 ---
 
-### Test 4: GELLO to simulated Lite6 (MuJoCo)
+### Test 4: GELLO to simulated Lite6 (MuJoCo) / Real Lite6
 
 No real robot needed. Opens a MuJoCo viewer with Lite6 that follows the GELLO.
 
-**Option A -- quick_run (simplest):**
+**Option A1 -- quick_run without GELLO hardware (simplest):**
+
+```bash
+python experiments/quick_run.py --robot sim_lite6 --agent dummy
+```
+
+**Option A2 -- quick_run with GELLO hardware :**
 
 ```bash
 cd /gello_software
@@ -117,18 +125,58 @@ python experiments/quick_run.py \
     --gello-port /dev/ttyUSB0
 ```
 
-**Option B -- without GELLO hardware (just test the sim loads):**
-
-```bash
-python experiments/quick_run.py --robot sim_lite6 --agent dummy
-```
-
-**Option C -- YAML config (after editing offsets/signs in the YAML):**
+**Option B1 -- sim Lite6 with launch_yaml.py (after editing offsets/signs in the YAML):**
 
 ```bash
 python experiments/launch_yaml.py \
     --left-config-path configs/lite6_sim_test.yaml
 ```
+
+**Option B2  -- Real Lite6 hardware with launch_yaml.py:**
+
+First update `configs/lite6_hw.yaml` with your Lite6's IP address and calibrated offsets. Then:
+
+```bash
+cd /gello_software
+python experiments/launch_yaml.py \
+    --left-config-path configs/lite6_hw.yaml
+```
+
+**Option C1 -- launch_nodes.py + run_env.py (two-process, sim):**
+
+Terminal 1 -- start the sim robot server:
+
+```bash
+cd /gello_software
+python experiments/launch_nodes.py --robot sim_lite6
+```
+
+Terminal 2 -- start the GELLO control loop:
+
+```bash
+cd /gello_software
+python experiments/run_env.py --agent gello --gello-port /dev/ttyUSB0
+```
+
+
+
+**Option C2 -- launch_nodes.py + run_env.py (two-process, real):**
+
+Terminal 1 -- start the real robot server:
+
+```bash
+cd /gello_software
+python experiments/launch_nodes.py --robot xarm --robot-ip 192.168.1.226
+```
+
+Terminal 2 -- start the GELLO control loop:
+
+```bash
+cd /gello_software
+python experiments/run_env.py --agent gello --gello-port /dev/ttyUSB0
+```
+
+> **Note:** `launch_nodes.py` uses `XArmRobot` for `--robot xarm`, which works for Lite6 since they share the same xArm SDK. Set `num_arm_joints: 6` in the YAML config if using `launch_yaml.py`. The `launch_nodes.py` path defaults to 7-axis; for Lite6 prefer `launch_yaml.py` with `configs/lite6_hw.yaml`.
 
 ---
 
