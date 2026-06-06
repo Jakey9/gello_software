@@ -149,14 +149,13 @@ class ZhonglinDriver(DynamixelDriverProtocol):
 
 
 def main():
-    ids = list(range(7))
+    ids = list(range(1, 7))
     driver = ZhonglinDriver(ids)
     try:
         while True:
             joints = driver.get_joints()
             print(f"Joint angles (rad): {np.round(joints, 3)}")
             print(f"Joint angles (deg): {np.round(np.rad2deg(joints), 1)}")
-            time.sleep(0.1)
     except KeyboardInterrupt:
         driver.close()
 
