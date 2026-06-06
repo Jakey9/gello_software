@@ -165,6 +165,7 @@ def run_control_loop(
 
     start_time = time.time()
     obs = env.get_obs()
+    num_env_dofs = len(obs["joint_positions"])
 
     while True:
         if print_timing:
@@ -179,6 +180,8 @@ def run_control_loop(
                 print(message, end="", flush=True)
 
         action = agent.act(obs)
+        if len(action) > num_env_dofs:
+            action = action[:num_env_dofs]
 
         # Handle save interface
         if save_interface is not None:
