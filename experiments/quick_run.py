@@ -10,7 +10,7 @@ import numpy as np
 import tyro
 
 from gello.agents.agent import DummyAgent
-from gello.agents.gello_agent import GelloAgent
+from gello.agents.gello_agent import GelloAgent, ZhonglinRobotConfig
 from gello.agents.spacemouse_agent import SpacemouseAgent
 from gello.env import RobotEnv
 from gello.zmq_core.robot_node import ZMQClientRobot, ZMQServerRobot
@@ -116,7 +116,15 @@ def main(args: Args):
                 raise ValueError(
                     "No gello port found, please specify one or plug in gello"
                 )
-        agent = GelloAgent(port=gello_port)
+        zhonglin_config = None
+        if args.robot == "sim_lite6":
+            zhonglin_config = ZhonglinRobotConfig(
+                joint_ids=(0, 1, 2, 3, 4, 5),
+                joint_offsets=(3.1416, 1.5708, 0, 0, 0, 0),  # TODO: re-calibrate joints 2-5
+                joint_signs=(1, 1, 1, 1, 1, 1),
+                gripper_config=(6, -0.2, -42.0),
+            )
+        agent = GelloAgent(port=gello_port, zhonglin_config=zhonglin_config)
 
         reset_joints = np.array([0, 0, 0, -np.pi, 0, np.pi, 0, 0])
         curr_joints = env.get_obs()["joint_positions"]
