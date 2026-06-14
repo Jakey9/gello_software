@@ -11,8 +11,8 @@ agent:
   zhonglin_config:
     _target_: gello.agents.gello_agent.ZhonglinRobotConfig
     joint_ids: [0, 1, 2, 3, 4, 5]
-    joint_offsets: [2.5258, 2.2172, 0, 0, 0, 0]  # TODO: re-calibrate joints 2-5
-    joint_signs: [1, 1, 1, 1, 1, 1]
+    joint_offsets: [2.5201, 2.1898, 2.3114, 0.9661, 2.3916, 0.2215]  # TODO: re-calibrate joints 2-5
+    joint_signs: [1, 1, 1, 1, -1, 1]
     gripper_config: null
     baudrate: 115200
 

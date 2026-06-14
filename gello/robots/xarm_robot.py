@@ -153,16 +153,22 @@ class XArmRobot(Robot):
 
     def __init__(
         self,
-        ip: str = "192.168.1.226",
+        ip: str = "192.168.1.210",
         real: bool = True,
         control_frequency: float = 50.0,
         max_delta: float = DEFAULT_MAX_DELTA,
         num_arm_joints: int = 7,
+        enable_gripper: bool = True,
+        servo_speed: float = 0.15,  # rad/s (~8.6 deg/s, reduced from default 0.349)
+        servo_acc: float = 2.0,  # rad/s^2 (~114 deg/s^2, reduced from default 8.726)
     ):
         print(ip)
         self.real = real
         self.max_delta = max_delta
         self._num_arm_joints = num_arm_joints
+        self.enable_gripper = enable_gripper
+        self.servo_speed = servo_speed
+        self.servo_acc = servo_acc
         if real:
             from xarm.wrapper import XArmAPI
 
@@ -172,7 +178,8 @@ class XArmRobot(Robot):
 
         self._control_frequency = control_frequency
         self._clear_error_states()
-        self._set_gripper_position(self.GRIPPER_OPEN)
+        if self.enable_gripper:
+            self._set_gripper_position(self.GRIPPER_OPEN)
 
         self.last_state_lock = threading.Lock()
         self.target_command_lock = threading.Lock()
@@ -211,15 +218,16 @@ class XArmRobot(Robot):
         time.sleep(1)
         self.robot.set_state(state=0)
         time.sleep(1)
-        self.robot.set_gripper_enable(True)
-        time.sleep(1)
-        self.robot.set_gripper_mode(0)
-        time.sleep(1)
-        self.robot.set_gripper_speed(3000)
-        time.sleep(1)
+        if self.enable_gripper:
+            self.robot.set_gripper_enable(True)
+            time.sleep(1)
+            self.robot.set_gripper_mode(0)
+            time.sleep(1)
+            self.robot.set_gripper_speed(3000)
+            time.sleep(1)
 
     def _get_gripper_pos(self) -> float:
-        if self.robot is None:
+        if self.robot is None or not self.enable_gripper:
             return 0.0
         code, gripper_pos = self.robot.get_gripper_position()
         while code != 0 or gripper_pos is None:
@@ -235,7 +243,7 @@ class XArmRobot(Robot):
         return normalized_gripper_pos
 
     def _set_gripper_position(self, pos: int) -> None:
-        if self.robot is None:
+        if self.robot is None or not self.enable_gripper:
             return
         self.robot.set_gripper_position(pos, wait=False)
         # while self.robot.get_is_moving():
@@ -328,7 +336,14 @@ class XArmRobot(Robot):
         if self.robot is None:
             return
         # threhold xyz to be in  min max
-        ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
+        # Use explicitly set servo speed and acceleration for controlled movements
+        ret = self.robot.set_servo_angle_j(
+            joints, 
+            speed=self.servo_speed,
+            mvacc=self.servo_acc,
+            wait=False, 
+            is_radian=True
+        )
         if ret in [1, 9]:
             self._clear_error_states()
 
