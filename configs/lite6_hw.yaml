@@ -5,6 +5,8 @@ robot:
   control_frequency: 50.0
   max_delta: 0.05
   num_arm_joints: 6
+  servo_speed: null         # servo joint speed (rad/s), null = SDK default
+  servo_mvacc: null         # servo joint acceleration (rad/s²), null = SDK default
 
 agent:
   _target_: gello.agents.gello_agent.GelloAgent
