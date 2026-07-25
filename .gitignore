@@ -34,8 +34,7 @@ ros2/install/
 ros2/log/
 
 # robot packages
-third_party/i2rt/
+third_party/
 
 # 3D Model Files
 *.stl
-third_party/DynamixelSDK

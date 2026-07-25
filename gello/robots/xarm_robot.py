@@ -117,9 +117,12 @@ class Rate:
 
 
 class XArmRobot(Robot):
-    GRIPPER_OPEN = 800
-    GRIPPER_CLOSE = 0
-    #  MAX_DELTA = 0.2
+    # OpenParallelGripper PWM positions (via Modbus RTU on tool port RS485)
+    GRIPPER_OPEN = 839
+    GRIPPER_CLOSE = 1918
+    MODBUS_SLAVE_ID = 0x01
+    MODBUS_POSITION_REG = 0x0080  # holding register 128
+
     DEFAULT_MAX_DELTA = 0.05
 
     def num_dofs(self) -> int:
@@ -159,16 +162,16 @@ class XArmRobot(Robot):
         max_delta: float = DEFAULT_MAX_DELTA,
         num_arm_joints: int = 7,
         enable_gripper: bool = True,
-        servo_speed: float = 0.15,  # rad/s (~8.6 deg/s, reduced from default 0.349)
-        servo_acc: float = 2.0,  # rad/s^2 (~114 deg/s^2, reduced from default 8.726)
+        servo_speed: Optional[float] = None,
+        servo_mvacc: Optional[float] = None,
     ):
         print(ip)
         self.real = real
         self.max_delta = max_delta
         self._num_arm_joints = num_arm_joints
         self.enable_gripper = enable_gripper
-        self.servo_speed = servo_speed
-        self.servo_acc = servo_acc
+        self._servo_speed = servo_speed
+        self._servo_mvacc = servo_mvacc
         if real:
             from xarm.wrapper import XArmAPI
 
@@ -177,6 +180,7 @@ class XArmRobot(Robot):
             self.robot = None
 
         self._control_frequency = control_frequency
+        self._last_gripper_normalized = 0.0
         self._clear_error_states()
         if self.enable_gripper:
             self._set_gripper_position(self.GRIPPER_OPEN)
@@ -219,35 +223,34 @@ class XArmRobot(Robot):
         self.robot.set_state(state=0)
         time.sleep(1)
         if self.enable_gripper:
-            self.robot.set_gripper_enable(True)
-            time.sleep(1)
-            self.robot.set_gripper_mode(0)
-            time.sleep(1)
-            self.robot.set_gripper_speed(3000)
-            time.sleep(1)
+            # OpenParallelGripper: Modbus RTU via tool port RS485
+            self.robot.set_tgpio_modbus_baudrate(115200)
+            time.sleep(0.5)
+            self.robot.set_tgpio_digital(0, 1)
+            time.sleep(0.5)
+            self.robot.set_tgpio_digital(1, 1)
+            time.sleep(0.5)
 
     def _get_gripper_pos(self) -> float:
         if self.robot is None or not self.enable_gripper:
             return 0.0
-        code, gripper_pos = self.robot.get_gripper_position()
-        while code != 0 or gripper_pos is None:
-            print(f"Error code {code} in get_gripper_position(). {gripper_pos}")
-            time.sleep(0.001)
-            code, gripper_pos = self.robot.get_gripper_position()
-            if code == 22:
-                self._clear_error_states()
-
-        normalized_gripper_pos = (gripper_pos - self.GRIPPER_OPEN) / (
-            self.GRIPPER_CLOSE - self.GRIPPER_OPEN
-        )
-        return normalized_gripper_pos
+        return self._last_gripper_normalized
 
     def _set_gripper_position(self, pos: int) -> None:
         if self.robot is None or not self.enable_gripper:
             return
-        self.robot.set_gripper_position(pos, wait=False)
-        # while self.robot.get_is_moving():
-        #     time.sleep(0.01)
+        pos_min = min(self.GRIPPER_OPEN, self.GRIPPER_CLOSE)
+        pos_max = max(self.GRIPPER_OPEN, self.GRIPPER_CLOSE)
+        pos = int(max(pos_min, min(pos_max, pos)))
+        data = [
+            self.MODBUS_SLAVE_ID,
+            0x06,
+            (self.MODBUS_POSITION_REG >> 8) & 0xFF,
+            self.MODBUS_POSITION_REG & 0xFF,
+            (pos >> 8) & 0xFF,
+            pos & 0xFF,
+        ]
+        self.robot.getset_tgpio_modbus_data(data)
 
     def _robot_thread(self):
         rate = Rate(
@@ -285,6 +288,7 @@ class XArmRobot(Robot):
                     self.GRIPPER_OPEN
                     + set_point * (self.GRIPPER_CLOSE - self.GRIPPER_OPEN)
                 )
+                self._last_gripper_normalized = set_point
             self.last_state = self._update_last_state()
 
             rate.sleep()
@@ -336,13 +340,9 @@ class XArmRobot(Robot):
         if self.robot is None:
             return
         # threhold xyz to be in  min max
-        # Use explicitly set servo speed and acceleration for controlled movements
         ret = self.robot.set_servo_angle_j(
-            joints, 
-            speed=self.servo_speed,
-            mvacc=self.servo_acc,
-            wait=False, 
-            is_radian=True
+            joints, speed=self._servo_speed, mvacc=self._servo_mvacc,
+            wait=False, is_radian=True,
         )
         if ret in [1, 9]:
             self._clear_error_states()
