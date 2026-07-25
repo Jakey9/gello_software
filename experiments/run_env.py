@@ -140,7 +140,7 @@ def main(args):
                 "zhonglin_config": {
                     "_target_": "gello.agents.gello_agent.ZhonglinRobotConfig",
                     "joint_ids": [0, 1, 2, 3, 4, 5],
-                    "joint_offsets": [3.1416, 1.5708, 0, 0, 0, 0],  # TODO: update after calibration
+                    "joint_offsets": [2.5258, 2.2172, 0, 0, 0, 0],  # TODO: update after calibration
                     "joint_signs": [1, 1, 1, 1, 1, 1],
                     "gripper_config": [6, -0.2, -42.0],
                     "baudrate": 115200,

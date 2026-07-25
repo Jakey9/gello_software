@@ -156,11 +156,12 @@ class XArmRobot(Robot):
 
     def __init__(
         self,
-        ip: str = "192.168.1.226",
+        ip: str = "192.168.1.210",
         real: bool = True,
         control_frequency: float = 50.0,
         max_delta: float = DEFAULT_MAX_DELTA,
         num_arm_joints: int = 7,
+        enable_gripper: bool = True,
         servo_speed: Optional[float] = None,
         servo_mvacc: Optional[float] = None,
     ):
@@ -168,6 +169,7 @@ class XArmRobot(Robot):
         self.real = real
         self.max_delta = max_delta
         self._num_arm_joints = num_arm_joints
+        self.enable_gripper = enable_gripper
         self._servo_speed = servo_speed
         self._servo_mvacc = servo_mvacc
         if real:
@@ -180,7 +182,8 @@ class XArmRobot(Robot):
         self._control_frequency = control_frequency
         self._last_gripper_normalized = 0.0
         self._clear_error_states()
-        self._set_gripper_position(self.GRIPPER_OPEN)
+        if self.enable_gripper:
+            self._set_gripper_position(self.GRIPPER_OPEN)
 
         self.last_state_lock = threading.Lock()
         self.target_command_lock = threading.Lock()
@@ -219,20 +222,22 @@ class XArmRobot(Robot):
         time.sleep(1)
         self.robot.set_state(state=0)
         time.sleep(1)
-        # OpenParallelGripper: Modbus RTU via tool port RS485
-        self.robot.set_tgpio_modbus_baudrate(115200)
-        time.sleep(0.5)
-        self.robot.set_tgpio_digital(0, 1)
-        self.robot.set_tgpio_digital(1, 1)
-        time.sleep(0.5)
+        if self.enable_gripper:
+            # OpenParallelGripper: Modbus RTU via tool port RS485
+            self.robot.set_tgpio_modbus_baudrate(115200)
+            time.sleep(0.5)
+            self.robot.set_tgpio_digital(0, 1)
+            time.sleep(0.5)
+            self.robot.set_tgpio_digital(1, 1)
+            time.sleep(0.5)
 
     def _get_gripper_pos(self) -> float:
-        if self.robot is None:
+        if self.robot is None or not self.enable_gripper:
             return 0.0
         return self._last_gripper_normalized
 
     def _set_gripper_position(self, pos: int) -> None:
-        if self.robot is None:
+        if self.robot is None or not self.enable_gripper:
             return
         pos_min = min(self.GRIPPER_OPEN, self.GRIPPER_CLOSE)
         pos_max = max(self.GRIPPER_OPEN, self.GRIPPER_CLOSE)

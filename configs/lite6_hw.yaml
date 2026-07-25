@@ -1,12 +1,13 @@
 robot:
   _target_: gello.robots.xarm_robot.XArmRobot
-  ip: "192.168.1.226"           # TODO: set your Lite6 IP address
+  ip: "192.168.1.210"           # TODO: set your Lite6 IP address
   real: true
   control_frequency: 50.0
-  max_delta: 0.05
+  max_delta: 0.15
   num_arm_joints: 6
-  servo_speed: null         # servo joint speed (rad/s), null = SDK default
-  servo_mvacc: null         # servo joint acceleration (rad/s²), null = SDK default
+  enable_gripper: false
+  servo_speed: 0.2         # servo joint speed (rad/s), null = SDK default
+  servo_mvacc: 0.5         # servo joint acceleration (rad/s²), null = SDK default
 
 agent:
   _target_: gello.agents.gello_agent.GelloAgent
@@ -14,9 +15,9 @@ agent:
   zhonglin_config:
     _target_: gello.agents.gello_agent.ZhonglinRobotConfig
     joint_ids: [0, 1, 2, 3, 4, 5]
-    joint_offsets: [3.1416, 1.5708, 0, 0, 0, 0]  # TODO: re-calibrate with all servos
-    joint_signs: [1, 1, 1, 1, 1, 1]
+    joint_offsets: [2.5201, 2.1898, 2.3114, 0.9661, 2.3916, 0.2215]  # TODO: re-calibrate with all servos
+    joint_signs: [1, 1, 1, 1, -1, 1]
     gripper_config: [6, -0.2, -42.0]
     baudrate: 115200
 
-hz: 30
+hz: 50
